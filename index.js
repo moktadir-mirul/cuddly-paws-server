@@ -80,6 +80,33 @@ async function run() {
       next();
     };
 
+
+    app.get("/allpets", verifyFBToken, async (req, res) => {
+      const { search, category, email } = req.query;
+
+      let query = {};
+      if (email) {
+        query.email = email;
+      }
+      if (search) {
+        query.name = { $regex: search, $options: "i" };
+      }
+      if (category) {
+        query.category = category;
+      }
+
+      try {
+        const pets = await petsCollection
+          .find(query)
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(pets);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch pets", error });
+      }
+    });
+
     app.get("/pets", async (req, res) => {
       const { search, category, email, page = 1, limit = 6 } = req.query;
       const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -108,32 +135,6 @@ async function run() {
           .toArray();
 
         res.send({ pets, total });
-      } catch (error) {
-        res.status(500).json({ message: "Failed to fetch pets", error });
-      }
-    });
-
-    app.get("/allpets", verifyFBToken, async (req, res) => {
-      const { search, category, email } = req.query;
-
-      let query = {};
-      if (email) {
-        query.email = email;
-      }
-      if (search) {
-        query.name = { $regex: search, $options: "i" };
-      }
-      if (category) {
-        query.category = category;
-      }
-
-      try {
-        const pets = await petsCollection
-          .find(query)
-          .sort({ createdAt: -1 })
-          .toArray();
-
-        res.send(pets);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch pets", error });
       }
@@ -517,9 +518,9 @@ async function run() {
     });
 
     app.get("/users", verifyFBToken, async (req, res) => {
-      const {email} = req.query;
+      const { email } = req.query;
       let query = {};
-      if(email) {
+      if (email) {
         query.email = email;
       }
       try {
