@@ -517,9 +517,14 @@ async function run() {
     });
 
     app.get("/users", verifyFBToken, async (req, res) => {
+      const {email} = req.query;
+      let query = {};
+      if(email) {
+        query.email = email;
+      }
       try {
         const result = await userCollection
-          .find()
+          .find(query)
           .sort({ createdAt: -1 })
           .toArray();
         res.send(result);
